@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Proyek Agile: ParkScan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8FAFC; /* Slate 50 - Warm/Cool Neutral */
+            color: #1E293B; /* Slate 800 */
+        }
+
+        /* Chart Container Strict Styling */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            height: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Custom Scrollbar for Kanban */
+        .kanban-col::-webkit-scrollbar {
+            width: 6px;
+        }
+        .kanban-col::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        .kanban-col::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+
+        /* Prototype Device Frame */
+        .phone-frame {
+            border: 12px solid #334155;
+            border-radius: 30px;
+            overflow: hidden;
+            position: relative;
+            background: white;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .active-nav {
+            border-bottom: 2px solid #2563EB;
+            color: #2563EB;
+            font-weight: 600;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+    <!-- Chosen Palette: Slate & Blue (Professional, Academic, Trustworthy) -->
+    <!-- Application Structure Plan: 
+         1. Header Navigation: Switches between the 'Report Context' and the 'App Simulation'.
+         2. Dashboard (Latar Belakang): Visualizes the problem (Fines) and the Solution concept using cards and flow diagrams.
+         3. Agile Analysis (Perencanaan): Shows the Team Roles and a Chart visualization of the Product Backlog Effort/Priority.
+         4. Kanban Board (Simulasi Sprint): Interactive board to visualize the Agile process (To Do -> Done) as requested in the report.
+         5. Prototype (Demo ParkScan): A fully functional simulation of the Student view (Dynamic Barcode) and Guard view (Scanner) within phone frames.
+         Why: This structure separates the "Academic Task" (Agile methodology reporting) from the "Product Outcome" (The App), allowing the user to understand the *process* first, then experience the *result*.
+    -->
+    <!-- Visualization & Content Choices:
+         1. Problem Metric: Simple cards for "50k Fine" to grab attention -> Goal: Inform.
+         2. Backlog Chart: Bar Chart (Chart.js) comparing 'Effort' vs 'Priority' of user stories -> Goal: Analyze/Plan -> Interaction: Tooltip details.
+         3. Kanban Board: HTML/JS Drag-and-drop simulation (click to move) -> Goal: Organize/Simulate Agile flow.
+         4. Barcode Simulation: HTML Canvas drawing random lines based on NIM seed -> Goal: Demonstrate Solution -> Interaction: Timer refresh.
+         5. Scanner Simulation: HTML/CSS mock interface -> Goal: Demonstrate usage scenario.
+         CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold text-blue-700 mr-2">🅿️ ParkScan</span>
+                    <span class="text-xs text-slate-500 hidden sm:block bg-slate-100 px-2 py-1 rounded">Project Agile Kelompok 2</span>
+                </div>
+                <div class="flex space-x-4 sm:space-x-8 items-center overflow-x-auto">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn active-nav px-3 py-4 text-sm font-medium transition-colors">Masalah & Solusi</button>
+                    <button onclick="switchTab('agile')" id="nav-agile" class="nav-btn px-3 py-4 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors">Analisis Agile</button>
+                    <button onclick="switchTab('prototype')" id="nav-prototype" class="nav-btn px-3 py-4 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors">Demo Aplikasi</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main id="content-area" class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        <!-- SECTION 1: DASHBOARD (Masalah & Solusi) -->
+        <section id="view-dashboard" class="fade-in space-y-8">
+            <div class="text-center max-w-3xl mx-auto mb-10">
+                <h1 class="text-3xl font-bold text-slate-900 mb-4">Transformasi Sistem Parkir Kampus</h1>
+                <p class="text-lg text-slate-600">
+                    Laporan proyek pengembangan website berbasis Agile untuk mengatasi masalah denda kehilangan kartu parkir fisik.
+                </p>
+            </div>
+
+            <!-- Problem Context Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                    <div class="text-red-500 text-4xl mb-3">⚠️</div>
+                    <h3 class="text-lg font-semibold text-slate-800">Masalah Utama</h3>
+                    <p class="text-slate-600 mt-2 text-sm">Kartu parkir fisik sering hilang. Mahasiswa merasa cemas setiap kali parkir.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                    <div class="text-orange-500 text-4xl mb-3">💸</div>
+                    <h3 class="text-lg font-semibold text-slate-800">Denda Memberatkan</h3>
+                    <p class="text-slate-600 mt-2 text-sm">Denda <strong>Rp 50.000</strong> wajib dibayar jika kartu hilang, dianggap tidak proporsional oleh mahasiswa.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                    <div class="text-blue-500 text-4xl mb-3">📱</div>
+                    <h3 class="text-lg font-semibold text-slate-800">Solusi ParkScan</h3>
+                    <p class="text-slate-600 mt-2 text-sm">Website dengan <strong>Barcode Dinamis</strong>. Tanpa kartu fisik, tanpa risiko hilang, tanpa denda.</p>
+                </div>
+            </div>
+
+            <!-- Flow Comparison (Interactive HTML Diagram) -->
+            <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mt-8">
+                <h2 class="text-xl font-bold text-slate-800 mb-6">Perbandingan Alur Proses</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <!-- Old Process -->
+                    <div>
+                        <h4 class="font-semibold text-red-600 mb-4 border-b pb-2">❌ Proses Lama (Manual)</h4>
+                        <div class="space-y-3 relative pl-4 border-l-2 border-slate-200">
+                            <div class="bg-slate-50 p-3 rounded text-sm relative">
+                                <span class="absolute -left-[22px] top-3 bg-slate-300 w-3 h-3 rounded-full"></span>
+                                Ambil Kartu Fisik di Gerbang
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded text-sm relative">
+                                <span class="absolute -left-[22px] top-3 bg-slate-300 w-3 h-3 rounded-full"></span>
+                                Simpan Kartu (Risiko Hilang Tinggi)
+                            </div>
+                            <div class="bg-red-50 p-3 rounded text-sm relative border border-red-100">
+                                <span class="absolute -left-[22px] top-3 bg-red-400 w-3 h-3 rounded-full"></span>
+                                <strong>Jika Hilang:</strong> Bayar Denda Rp 50.000
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded text-sm relative">
+                                <span class="absolute -left-[22px] top-3 bg-slate-300 w-3 h-3 rounded-full"></span>
+                                Kembalikan Kartu untuk Keluar
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- New Process -->
+                    <div>
+                        <h4 class="font-semibold text-blue-600 mb-4 border-b pb-2">✅ Proses Baru (ParkScan)</h4>
+                        <div class="space-y-3 relative pl-4 border-l-2 border-blue-200">
+                            <div class="bg-blue-50 p-3 rounded text-sm relative cursor-pointer hover:bg-blue-100 transition-colors" onclick="alert('Demo: Login menggunakan NIM')">
+                                <span class="absolute -left-[22px] top-3 bg-blue-500 w-3 h-3 rounded-full"></span>
+                                Login SSO / NIM di HP
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded text-sm relative cursor-pointer hover:bg-blue-100 transition-colors" onclick="alert('Barcode akan digenerate secara otomatis')">
+                                <span class="absolute -left-[22px] top-3 bg-blue-500 w-3 h-3 rounded-full"></span>
+                                Tampilkan <strong>Barcode Dinamis</strong>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded text-sm relative">
+                                <span class="absolute -left-[22px] top-3 bg-blue-500 w-3 h-3 rounded-full"></span>
+                                Satpam Scan HP (Verifikasi Wajah)
+                            </div>
+                            <div class="bg-green-50 p-3 rounded text-sm relative border border-green-100">
+                                <span class="absolute -left-[22px] top-3 bg-green-500 w-3 h-3 rounded-full"></span>
+                                <strong>Bebas Denda</strong> & Akses Cepat
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: AGILE ANALYSIS & PLANNING -->
+        <section id="view-agile" class="hidden fade-in space-y-8">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold text-slate-800">Manajemen Proyek Agile</h2>
+                <p class="text-slate-600">Implementasi Scrum Framework: Backlog, Roles, dan Sprint Planning.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Roles Card -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 col-span-1">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">Tim Scrum</h3>
+                    <ul class="space-y-4">
+                        <li class="flex items-center p-3 bg-indigo-50 rounded-lg">
+                            <span class="text-2xl mr-3">👑</span>
+                            <div>
+                                <p class="font-bold text-indigo-900 text-sm">Product Owner</p>
+                                <p class="text-xs text-indigo-700">Menentukan prioritas fitur & nilai bisnis.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-center p-3 bg-purple-50 rounded-lg">
+                            <span class="text-2xl mr-3">🛡️</span>
+                            <div>
+                                <p class="font-bold text-purple-900 text-sm">Scrum Master</p>
+                                <p class="text-xs text-purple-700">Memfasilitasi daily scrum & hapus hambatan.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-center p-3 bg-slate-50 rounded-lg">
+                            <span class="text-2xl mr-3">💻</span>
+                            <div>
+                                <p class="font-bold text-slate-900 text-sm">Dev Team</p>
+                                <p class="text-xs text-slate-700">Desain UI/UX, Frontend, & Backend.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Backlog Chart -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 col-span-1 lg:col-span-2">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-slate-800">Analisis Product Backlog</h3>
+                        <div class="text-xs text-slate-500">Estimasi Effort vs Prioritas</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="backlogChart"></canvas>
+                    </div>
+                    <p class="text-xs text-center text-slate-400 mt-2">Data berdasarkan estimasi Planning Poker tim.</p>
+                </div>
+            </div>
+
+            <!-- Kanban Board Simulator -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mt-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold text-slate-800">Simulasi Sprint Board</h3>
+                    <div class="flex space-x-2">
+                        <button onclick="filterSprint(1)" class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 font-bold">Sprint 1</button>
+                        <button onclick="filterSprint(2)" class="px-3 py-1 text-xs bg-slate-100 text-slate-700 rounded hover:bg-slate-200">Sprint 2</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 h-96">
+                    <!-- To Do -->
+                    <div class="bg-slate-100 rounded-lg p-3 flex flex-col h-full">
+                        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 pl-1">To Do</h4>
+                        <div id="col-todo" class="kanban-col flex-grow overflow-y-auto space-y-2 pr-1">
+                            <!-- JS injected items -->
+                        </div>
+                    </div>
+                    <!-- In Progress -->
+                    <div class="bg-blue-50 rounded-lg p-3 flex flex-col h-full">
+                        <h4 class="text-xs font-bold text-blue-500 uppercase tracking-wider mb-3 pl-1">In Progress</h4>
+                        <div id="col-progress" class="kanban-col flex-grow overflow-y-auto space-y-2 pr-1">
+                            <!-- JS injected items -->
+                        </div>
+                    </div>
+                    <!-- Done -->
+                    <div class="bg-green-50 rounded-lg p-3 flex flex-col h-full">
+                        <h4 class="text-xs font-bold text-green-500 uppercase tracking-wider mb-3 pl-1">Done</h4>
+                        <div id="col-done" class="kanban-col flex-grow overflow-y-auto space-y-2 pr-1">
+                            <!-- JS injected items -->
+                        </div>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-2">💡 Klik kartu untuk memindahkan status tugas secara berurutan.</p>
+            </div>
+        </section>
+
+        <!-- SECTION 3: PROTOTYPE DEMO -->
+        <section id="view-prototype" class="hidden fade-in">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold text-slate-800">Demo Prototype Aplikasi</h2>
+                <p class="text-slate-600 mb-6">Simulasi interaksi Mahasiswa dan Satpam secara real-time.</p>
+                
+                <div class="inline-flex bg-slate-100 p-1 rounded-lg">
+                    <button onclick="setPrototypeMode('mahasiswa')" id="btn-mode-mhs" class="px-4 py-2 rounded-md text-sm font-medium bg-white shadow text-blue-700 transition-all">Mode Mahasiswa</button>
+                    <button onclick="setPrototypeMode('satpam')" id="btn-mode-satpam" class="px-4 py-2 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 transition-all">Mode Satpam</button>
+                </div>
+            </div>
+
+            <!-- Device Container -->
+            <div class="flex justify-center">
+                <div class="phone-frame w-full max-w-sm h-[650px] bg-white relative">
+                    
+                    <!-- Screen: Mahasiswa Login -->
+                    <div id="screen-login" class="absolute inset-0 p-6 flex flex-col justify-center bg-white z-20">
+                        <div class="text-center mb-8">
+                            <h3 class="text-2xl font-bold text-blue-700">🅿️ ParkScan</h3>
+                            <p class="text-slate-500 text-sm mt-1">Akses Parkir Digital</p>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Nama Lengkap</label>
+                                <input type="text" id="input-nama" value="Budi Santoso" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">NIM</label>
+                                <input type="text" id="input-nim" value="1910811003" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <button onclick="loginMahasiswa()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-medium shadow-lg hover:bg-blue-700 transition transform active:scale-95">Masuk / Buat Barcode</button>
+                        </div>
+                    </div>
+
+                    <!-- Screen: Mahasiswa Barcode -->
+                    <div id="screen-barcode" class="hidden absolute inset-0 bg-slate-50 z-10 flex flex-col">
+                        <!-- Header -->
+                        <div class="bg-blue-600 p-4 text-white pb-6 rounded-b-3xl shadow-md">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-xs opacity-80">Status: Mahasiswa</p>
+                                    <h4 id="display-nama" class="font-bold text-lg">Budi Santoso</h4>
+                                    <p id="display-nim" class="text-xs font-mono opacity-90">1910811003</p>
+                                </div>
+                                <div class="bg-white/20 p-2 rounded-full">
+                                    <span class="text-xl">🎓</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Barcode Card -->
+                        <div class="flex-grow flex flex-col items-center justify-center p-4 -mt-4">
+                            <div class="bg-white p-6 rounded-2xl shadow-xl w-full text-center border border-slate-100">
+                                <p class="text-xs text-green-600 font-bold mb-2 flex items-center justify-center">
+                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                                    Barcode Dinamis Aktif
+                                </p>
+                                
+                                <!-- Canvas for Drawing Barcode -->
+                                <div class="h-32 w-full bg-white mb-2 flex items-center justify-center overflow-hidden">
+                                    <canvas id="barcodeCanvas" width="250" height="100"></canvas>
+                                </div>
+                                
+                                <p id="barcode-value" class="text-[10px] text-slate-400 font-mono tracking-widest mb-4">1910811003-GEN-X92</p>
+
+                                <div class="bg-slate-50 rounded-lg p-3">
+                                    <p class="text-xs text-slate-500 mb-1">Refresh otomatis dalam:</p>
+                                    <p id="countdown" class="text-2xl font-bold text-blue-600 font-mono">15s</p>
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-6 text-center px-4">Tunjukkan layar ini kepada petugas keamanan di gerbang masuk.</p>
+                        </div>
+
+                        <!-- Bottom Nav -->
+                        <div class="bg-white p-4 border-t flex justify-between">
+                            <button class="text-xs flex flex-col items-center text-blue-600">
+                                <span>🏠</span> Home
+                            </button>
+                            <button onclick="alert('Riwayat Parkir: \n25 Okt: 08.00 - 15.00\n24 Okt: 09.00 - 12.00')" class="text-xs flex flex-col items-center text-slate-400">
+                                <span>📜</span> Riwayat
+                            </button>
+                            <button onclick="logout()" class="text-xs flex flex-col items-center text-red-400">
+                                <span>🚪</span> Logout
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Screen: Satpam Scanner -->
+                    <div id="screen-satpam" class="hidden absolute inset-0 bg-gray-900 z-30 flex flex-col">
+                        <div class="p-4 flex justify-between items-center text-white bg-black/50">
+                            <span class="font-bold">Satpam Mode</span>
+                            <span class="text-xs bg-red-500 px-2 py-1 rounded">LIVE CAM</span>
+                        </div>
+
+                        <!-- Viewfinder -->
+                        <div class="flex-grow relative flex items-center justify-center">
+                            <!-- Crosshair -->
+                            <div class="w-64 h-64 border-2 border-white/50 rounded-lg relative">
+                                <div class="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-green-400 -mt-1 -ml-1"></div>
+                                <div class="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-green-400 -mt-1 -mr-1"></div>
+                                <div class="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-green-400 -mb-1 -ml-1"></div>
+                                <div class="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-green-400 -mb-1 -mr-1"></div>
+                                
+                                <!-- Scan Line Animation -->
+                                <div class="w-full h-0.5 bg-red-500 absolute top-0 shadow-[0_0_10px_rgba(239,68,68,0.8)] animate-[scan_2s_ease-in-out_infinite]"></div>
+                            </div>
+                            <p class="absolute bottom-20 text-white/80 text-sm">Arahkan ke Barcode Mahasiswa</p>
+                        </div>
+
+                        <div class="p-6 bg-white rounded-t-3xl">
+                            <button onclick="triggerScan()" class="w-full bg-slate-800 text-white py-4 rounded-xl font-bold shadow-lg active:scale-95 transition">
+                                📸 SCAN SEKARANG
+                            </button>
+                        </div>
+
+                        <!-- Result Modal (Satpam) -->
+                        <div id="scan-result" class="hidden absolute inset-0 bg-black/80 flex items-center justify-center p-6 z-50">
+                            <div class="bg-white w-full rounded-2xl p-5 text-center shadow-2xl transform scale-100 transition-all">
+                                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <span class="text-3xl">✅</span>
+                                </div>
+                                <h3 class="text-xl font-bold text-slate-800">VERIFIKASI SUKSES</h3>
+                                <div class="my-4 bg-slate-50 p-3 rounded-lg text-left">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center">👤</div>
+                                        <div>
+                                            <p class="font-bold text-sm">Budi Santoso</p>
+                                            <p class="text-xs text-slate-500">1910811003 - F. Teknik</p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 pt-2 border-t border-slate-200 flex justify-between text-xs">
+                                        <span class="text-slate-500">Kendaraan:</span>
+                                        <span class="font-mono font-bold">B 1234 XYZ</span>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <button onclick="closeScanResult()" class="bg-green-600 text-white py-2 rounded-lg font-bold hover:bg-green-700">Masuk</button>
+                                    <button onclick="closeScanResult()" class="bg-red-100 text-red-600 py-2 rounded-lg font-bold hover:bg-red-200">Tolak</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            
+            <style>
+                @keyframes scan {
+                    0%, 100% { top: 0%; opacity: 0; }
+                    10% { opacity: 1; }
+                    90% { opacity: 1; }
+                    100% { top: 100%; opacity: 0; }
+                }
+            </style>
+        </section>
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center text-slate-400 text-sm">
+            <p>Tugas Pengembangan Sistem Informasi Agile - ParkScan © 2025</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- DATA STORAGE ---
+        // Mock Data for Backlog
+        const backlogData = [
+            { id: 1, title: "Login Mahasiswa", priority: "High", effort: 2, sprint: 1, status: "done" },
+            { id: 2, title: "Generate Barcode Dinamis", priority: "High", effort: 3, sprint: 1, status: "done" },
+            { id: 3, title: "Desain Mobile Responsive", priority: "High", effort: 1, sprint: 1, status: "progress" },
+            { id: 4, title: "Fitur Scan Satpam", priority: "High", effort: 4, sprint: 2, status: "todo" },
+            { id: 5, title: "Verifikasi Data", priority: "High", effort: 2, sprint: 2, status: "todo" },
+            { id: 6, title: "Riwayat Parkir", priority: "Medium", effort: 2, sprint: 2, status: "todo" },
+            { id: 7, title: "CRUD Data Admin", priority: "Medium", effort: 3, sprint: 2, status: "todo" }
+        ];
+
+        let currentSprintFilter = 1;
+        let barcodeTimer = null;
+        let timeLeft = 15;
+
+        // --- NAVIGATION LOGIC ---
+        function switchTab(tabId) {
+            // Hide all sections
+            ['dashboard', 'agile', 'prototype'].forEach(id => {
+                document.getElementById(`view-${id}`).classList.add('hidden');
+                document.getElementById(`nav-${id}`).classList.remove('active-nav', 'text-blue-700');
+                document.getElementById(`nav-${id}`).classList.add('text-slate-500');
+            });
+
+            // Show selected
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabId}`).classList.add('active-nav', 'text-blue-700');
+            document.getElementById(`nav-${tabId}`).classList.remove('text-slate-500');
+
+            // Trigger specific inits
+            if (tabId === 'agile') {
+                renderKanban();
+                // Ensure chart resizes correctly
+                if(window.myChart) window.myChart.resize();
+            }
+        }
+
+        // --- CHART JS IMPLEMENTATION ---
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('backlogChart').getContext('2d');
+            
+            // Process data for chart
+            const labels = backlogData.map(item => `Story ${item.id}`);
+            const efforts = backlogData.map(item => item.effort);
+            const priorities = backlogData.map(item => item.priority === 'High' ? 3 : item.priority === 'Medium' ? 2 : 1);
+
+            window.myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: backlogData.map(i => i.title.substring(0, 15) + '...'),
+                    datasets: [
+                        {
+                            label: 'Effort (Story Points)',
+                            data: efforts,
+                            backgroundColor: '#3B82F6', // Blue 500
+                            borderRadius: 4,
+                        },
+                        {
+                            label: 'Priority Level (1-3)',
+                            data: priorities,
+                            backgroundColor: '#CBD5E1', // Slate 300
+                            borderRadius: 4,
+                            type: 'line'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const item = backlogData[context.dataIndex];
+                                    return `${context.dataset.label}: ${context.raw} (${item.title})`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            renderKanban();
+        });
+
+        // --- KANBAN LOGIC ---
+        function filterSprint(sprintNum) {
+            currentSprintFilter = sprintNum;
+            renderKanban();
+        }
+
+        function renderKanban() {
+            const cols = { todo: [], progress: [], done: [] };
+            
+            // Filter and Sort
+            backlogData.filter(item => item.sprint === currentSprintFilter).forEach(item => {
+                const card = `
+                    <div onclick="moveCard(${item.id})" class="bg-white p-3 rounded shadow-sm border border-slate-200 cursor-pointer hover:shadow-md transition-all group">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[10px] px-2 py-0.5 rounded-full ${item.priority === 'High' ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-700'} font-bold">${item.priority}</span>
+                            <span class="text-[10px] text-slate-400 font-mono bg-slate-50 px-1 rounded">${item.effort} pts</span>
+                        </div>
+                        <p class="text-sm font-medium text-slate-700 leading-tight">${item.title}</p>
+                        <div class="mt-2 h-1 w-full bg-slate-100 rounded overflow-hidden">
+                            <div class="h-full bg-blue-500 w-0 group-hover:w-full transition-all duration-500"></div>
+                        </div>
+                    </div>
+                `;
+                cols[item.status].push(card);
+            });
+
+            // Inject HTML
+            document.getElementById('col-todo').innerHTML = cols.todo.join('') || '<p class="text-xs text-slate-400 italic p-2">Tidak ada tugas</p>';
+            document.getElementById('col-progress').innerHTML = cols.progress.join('') || '<p class="text-xs text-slate-400 italic p-2">Tidak ada tugas</p>';
+            document.getElementById('col-done').innerHTML = cols.done.join('') || '<p class="text-xs text-slate-400 italic p-2">Tidak ada tugas</p>';
+        }
+
+        function moveCard(id) {
+            const item = backlogData.find(i => i.id === id);
+            if (item.status === 'todo') item.status = 'progress';
+            else if (item.status === 'progress') item.status = 'done';
+            else if (item.status === 'done') item.status = 'todo'; // Cycle back for demo
+            renderKanban();
+        }
+
+        // --- PROTOTYPE LOGIC ---
+        
+        // Mode Switching
+        function setPrototypeMode(mode) {
+            const screenLogin = document.getElementById('screen-login');
+            const screenBarcode = document.getElementById('screen-barcode');
+            const screenSatpam = document.getElementById('screen-satpam');
+            
+            // Reset views
+            screenLogin.classList.remove('hidden');
+            screenBarcode.classList.add('hidden');
+            screenSatpam.classList.add('hidden');
+            
+            // Style buttons
+            const btnMhs = document.getElementById('btn-mode-mhs');
+            const btnSat = document.getElementById('btn-mode-satpam');
+
+            if (mode === 'mahasiswa') {
+                btnMhs.className = "px-4 py-2 rounded-md text-sm font-medium bg-white shadow text-blue-700 transition-all";
+                btnSat.className = "px-4 py-2 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 transition-all";
+            } else {
+                btnMhs.className = "px-4 py-2 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 transition-all";
+                btnSat.className = "px-4 py-2 rounded-md text-sm font-medium bg-white shadow text-slate-800 transition-all";
+                
+                screenLogin.classList.add('hidden');
+                screenSatpam.classList.remove('hidden');
+            }
+        }
+
+        // Mahasiswa Functions
+        function loginMahasiswa() {
+            const nama = document.getElementById('input-nama').value;
+            const nim = document.getElementById('input-nim').value;
+            
+            document.getElementById('display-nama').innerText = nama;
+            document.getElementById('display-nim').innerText = nim;
+            
+            document.getElementById('screen-login').classList.add('hidden');
+            document.getElementById('screen-barcode').classList.remove('hidden');
+            
+            startBarcodeEngine();
+        }
+
+        function logout() {
+            document.getElementById('screen-barcode').classList.add('hidden');
+            document.getElementById('screen-login').classList.remove('hidden');
+            stopBarcodeEngine();
+        }
+
+        // Barcode Engine (Canvas Drawing)
+        function startBarcodeEngine() {
+            drawBarcode();
+            timeLeft = 15;
+            updateCountdown();
+            
+            if (barcodeTimer) clearInterval(barcodeTimer);
+            barcodeTimer = setInterval(() => {
+                timeLeft--;
+                updateCountdown();
+                if (timeLeft <= 0) {
+                    drawBarcode(); // Refresh barcode visual
+                    timeLeft = 15; // Reset timer
+                }
+            }, 1000);
+        }
+
+        function stopBarcodeEngine() {
+            if (barcodeTimer) clearInterval(barcodeTimer);
+        }
+
+        function updateCountdown() {
+            document.getElementById('countdown').innerText = `${timeLeft}s`;
+        }
+
+        function drawBarcode() {
+            const canvas = document.getElementById('barcodeCanvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // Clear
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, w, h);
+
+            // Draw random lines to simulate barcode
+            ctx.fillStyle = '#000000';
+            const numLines = 40;
+            const segment = w / numLines;
+            
+            // Seed-like behavior (random for demo refresh)
+            for(let i = 0; i < numLines; i++) {
+                if (Math.random() > 0.3) { // 70% chance of line
+                    const lineWidth = Math.random() * (segment - 1) + 1;
+                    const x = i * segment;
+                    ctx.fillRect(x, 10, lineWidth, h - 20);
+                }
+            }
+
+            // Update text code below
+            const randomCode = Math.floor(Math.random() * 10000);
+            document.getElementById('barcode-value').innerText = `1910811003-SEC-${randomCode}`;
+        }
+
+        // Satpam Functions
+        function triggerScan() {
+            // Simulate processing
+            const resultModal = document.getElementById('scan-result');
+            resultModal.classList.remove('hidden');
+            
+            // Add a slight delay for realism
+            resultModal.classList.add('opacity-0');
+            setTimeout(() => {
+                resultModal.classList.remove('opacity-0');
+            }, 100);
+        }
+
+        function closeScanResult() {
+            document.getElementById('scan-result').classList.add('hidden');
+        }
+
+    </script>
+</body>
+</html>
